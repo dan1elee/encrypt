@@ -148,7 +148,7 @@ int fileSHA256(FILE* fp, unsigned long fsize, unsigned char* hash){
     size_t bytes_read;
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
-    unsigned long times=((unsigned long)(fsize/16))+1;
+    unsigned long times=((unsigned long)(fsize/sizeof(buffer)))+1;
     for(unsigned long i=0;i<times;i++){
         bytes_read = fread(buffer, sizeof(char), sizeof(buffer), fp);
         SHA256_Update(&sha256, buffer, bytes_read);

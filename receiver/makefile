@@ -8,4 +8,4 @@ main.o:main.cpp
 receiver.o:receiver.cpp
 	$(CC) -c receiver.cpp $(CFLAGS)
 clean:
-	rm rec main.o receiver.o
+	rm rec *.o
