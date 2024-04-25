@@ -1,5 +1,5 @@
 #include "sender.h"
-
+#define SHA_BUFFER_SIZE 32
 int getServerSocket(const char *ip,int port){
     int serv_sock=socket(AF_INET,SOCK_STREAM,0);
     if(serv_sock!=-1){
@@ -140,6 +140,39 @@ int sendFile(FILE* fp,unsigned long fsize,unsigned char *path,unsigned char *dat
         AES_encrypt(data_to_encrypt, data_after_encrypt, AESEncryptKey);
         sendData(data_after_encrypt,16,clnt_sock);
     }
+
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    fileSHA256(fp, fsize, hash);
+
+    unsigned char hash16[16];
+    unsigned char hash16_encrypt[16];
+    memcpy(hash16,hash,16);
+    AES_encrypt(hash16,hash16_encrypt,AESEncryptKey);
+    sendData(hash16_encrypt, 16, clnt_sock);
+
+    memcpy(hash16,hash+16,16);
+    AES_encrypt(hash16,hash16_encrypt,AESEncryptKey);
+    sendData(hash16_encrypt, 16, clnt_sock);
+
     printf("Completes!\n");
+    return 0;
+}
+
+int fileSHA256(FILE* fp, unsigned long fsize, unsigned char* hash){
+    fseek(fp, 0, SEEK_SET);
+    unsigned char buffer[SHA_BUFFER_SIZE];
+    size_t bytes_read;
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    unsigned long times=((unsigned long)(fsize/16))+1;
+    for(unsigned long i=0;i<times;i++){
+        bytes_read = fread(buffer, sizeof(char), sizeof(buffer), fp);
+        SHA256_Update(&sha256, buffer, bytes_read);
+    }
+    SHA256_Final(hash, &sha256);
+    for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        printf("%02x", hash[i]);
+    }
+    printf("\n");
     return 0;
 }

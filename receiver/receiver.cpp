@@ -1,5 +1,5 @@
 #include "receiver.h"
-
+#define SHA_BUFFER_SIZE 32
 int sendSeed(unsigned char *seed,int s_len,int sock){
     char* data=(char*)seed;
     int len=s_len;
@@ -122,5 +122,37 @@ int recvFile(unsigned char *data_after_encrypt,unsigned char *data_after_decrypt
         }
     }
     fclose(fp);
+    unsigned char recvHash_encrypt[16];
+    unsigned char recvHash[SHA256_DIGEST_LENGTH];
+    recvEncryptedData(recvHash_encrypt, 16, sock);
+    AES_decrypt(recvHash_encrypt,recvHash, AESDecryptKey);
+
+    recvEncryptedData(recvHash_encrypt, 16, sock);
+    AES_decrypt(recvHash_encrypt,recvHash+16, AESDecryptKey);
+
+    fp=fopen((const char*)fn, "rb");
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    fileSHA256(fp,fsize,hash);
+    int cmpResult = memcmp(recvHash, hash, SHA256_DIGEST_LENGTH);
+    if (cmpResult == 0){
+        printf("SHA-256 match\n");
+    } else {
+        printf("SHA-256 not match\n");
+    }
     printf("Completes!\n");
+}
+
+int fileSHA256(FILE* fp, unsigned long fsize, unsigned char* hash){
+    fseek(fp, 0, SEEK_SET);
+    unsigned char buffer[SHA_BUFFER_SIZE];
+    size_t bytes_read;
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    unsigned long times=((unsigned long)(fsize/16))+1;
+    for(unsigned long i=0;i<times;i++){
+        bytes_read = fread(buffer, sizeof(char), sizeof(buffer), fp);
+        SHA256_Update(&sha256, buffer, bytes_read);
+    }
+    SHA256_Final(hash, &sha256);
+    return 0;
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <openssl/rsa.h>
 #include <openssl/aes.h>
+#include <openssl/sha.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -23,7 +24,6 @@ int recvSeed(unsigned char *buffer,int s_len,int clnt_sock);
 int getServerSocket(const char *ip,int port);
 //waiting for connection from receiver.
 int waitForConnection(int serv_sock);
-
-
-
+//calcu sha256
+int fileSHA256(FILE* fp, unsigned long fsize, unsigned char* hash);
 #endif // SENDER_H_INCLUDED

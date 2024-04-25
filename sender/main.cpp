@@ -1,7 +1,7 @@
 #include "sender.h"
 
 int main(){
-    int serv_sock=getServerSocket("192.168.0.100",8000);
+    int serv_sock=getServerSocket("10.0.2.15",8000);
     printf("Sender socket ready.\n");
     printf("Waiting for connection...\n");
     int clnt_sock=waitForConnection(serv_sock);
