@@ -1,5 +1,5 @@
 #include "sender.h"
-
+#define RANDOMERROR true
 int main(){
     int serv_sock=getServerSocket("10.0.2.15",8000);
     printf("Sender socket ready.\n");
@@ -70,7 +70,11 @@ int main(){
         fsize=ftell(fp);
         fseek(fp,0,SEEK_SET);
         memset(data_to_encrypt,0,sizeof(data_to_encrypt));
-        sendFile(fp,fsize,path,data_to_encrypt,data_after_encrypt,&AESEncryptKey,clnt_sock);
+        if(!RANDOMERROR){
+            sendFile(fp,fsize,path,data_to_encrypt,data_after_encrypt,&AESEncryptKey,clnt_sock);
+        } else {
+            sendFileWithRandomError(fp,fsize,path,data_to_encrypt,data_after_encrypt,&AESEncryptKey,clnt_sock);
+        }
         fclose(fp);
     }
     RSA_free(ClientRSA);

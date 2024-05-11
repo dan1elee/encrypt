@@ -26,4 +26,6 @@ int getServerSocket(const char *ip,int port);
 int waitForConnection(int serv_sock);
 //calcu sha256
 int fileSHA256(FILE* fp, unsigned long fsize, unsigned char* hash);
+
+int sendFileWithRandomError(FILE* fp,unsigned long fsize,unsigned char *path,unsigned char *data_to_encrypt,unsigned char *data_after_encrypt,AES_KEY *AESEncryptKey,int clnt_sock);
 #endif // SENDER_H_INCLUDED

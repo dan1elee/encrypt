@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <time.h>
 #include "sender.h"
 #define SHA_BUFFER_SIZE 32
 int getServerSocket(const char *ip,int port){
@@ -174,5 +176,68 @@ int fileSHA256(FILE* fp, unsigned long fsize, unsigned char* hash){
         printf("%02x", hash[i]);
     }
     printf("\n");
+    return 0;
+}
+
+int sendFileWithRandomError(FILE* fp,unsigned long fsize,unsigned char *path,unsigned char *data_to_encrypt,unsigned char *data_after_encrypt,AES_KEY *AESEncryptKey,int clnt_sock){
+    //send file size
+    unsigned long times=((unsigned long)(fsize/16))+1;
+    printf("File size:%lu bytes\n",fsize);
+    char* fs=(char*)&fsize;
+    char p_fs[16];//padding to 16bytes
+    memset(p_fs,0,sizeof(p_fs));
+    strncpy(p_fs,(const char*)fs,sizeof(fs));
+    char e_fs[16];
+    AES_encrypt((unsigned char*)p_fs, (unsigned char*)e_fs, AESEncryptKey);
+    sendData((unsigned char*)e_fs,sizeof(e_fs),clnt_sock);
+    //send file name
+    const char ch='/';
+    const char *ret;
+    ret=strrchr((const char*)path,ch);
+    char fn[256];
+    memset(fn,0,sizeof(fn));
+    if(ret!=NULL){
+        strcpy(fn,(const char*)ret+1);
+    }else{
+        strcpy(fn,(const char*)path);
+    }
+    printf("File name:%s\n",fn);
+    char e_fn[256];
+    AES_encrypt((unsigned char*)fn, (unsigned char*)e_fn, AESEncryptKey);
+    sendData((unsigned char*)e_fn,sizeof(e_fn),clnt_sock);
+    //send data
+    printf("Sending File...\n");
+    srand((unsigned)time(NULL));
+    
+    bool flag = false;
+    for(unsigned long i=0;i<times;i++){
+        fread(data_to_encrypt,16,1,fp);
+        double r = rand() / double(RAND_MAX);
+        if (r < 0.01) {
+            flag = true;
+            int bit = (int)(128 * rand() / double(RAND_MAX));
+            data_to_encrypt[bit>>3] = data_to_encrypt[bit>>3] ^ (1<<(bit % 8));
+        }
+        AES_encrypt(data_to_encrypt, data_after_encrypt, AESEncryptKey);
+        sendData(data_after_encrypt,16,clnt_sock);
+    }
+    if(flag){
+        printf("bits changed in this file.\n");
+    }
+
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    fileSHA256(fp, fsize, hash);
+
+    unsigned char hash16[16];
+    unsigned char hash16_encrypt[16];
+    memcpy(hash16,hash,16);
+    AES_encrypt(hash16,hash16_encrypt,AESEncryptKey);
+    sendData(hash16_encrypt, 16, clnt_sock);
+
+    memcpy(hash16,hash+16,16);
+    AES_encrypt(hash16,hash16_encrypt,AESEncryptKey);
+    sendData(hash16_encrypt, 16, clnt_sock);
+
+    printf("Completes!\n");
     return 0;
 }

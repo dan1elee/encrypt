@@ -62,7 +62,7 @@ int main()
     AES_set_decrypt_key(aesSeed, 256, &AESDecryptKey);
     while(1){
         //receive data
-        printf("Wainting For File...\n");
+        printf("Waiting For File...\n");
         memset(data_after_encrypt,0,sizeof(data_after_encrypt));
         recvFile(data_after_encrypt,data_after_decrypt,&AESDecryptKey,sock);
     }
