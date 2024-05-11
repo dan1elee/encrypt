@@ -55,6 +55,9 @@ int main(){
         memset(path,0,sizeof(path));
         printf("Please input path of the file you wanna send:\n");
         scanf("%s",path);
+        if (strcmp((char *)path, "quit()")==0){
+            break;
+        }
         FILE* fp;
         while((fp=fopen((const char*)path,"rb"))==NULL){
             memset(path,0,sizeof(path));
